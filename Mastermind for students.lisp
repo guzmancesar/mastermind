@@ -154,12 +154,12 @@
      for response = (respond-to-guess self guess i)
      for win = (equal (first response) 'win)
      for time-is-up = (> (get-internal-run-time) stop-time)
-     ;do (print (list (get-internal-run-time) stop-time))
-     ;when win
-     ;do (format t "~%Win. Round over.")
-     ;else when response
-     ;do (format t "~%score ~a" response)
-     ;else do (format t "~%Invalid entry. Round over.")
+     do (print (list (get-internal-run-time) stop-time)) ;for testing (recomment later)
+     when win ;for testing (recomment later)
+     do (format t "~%Win. Round over.") ;for testing (recomment later)
+     else when response ;for testing (recomment later)
+     do (format t "~%score ~a" response) ;for testing (recomment later)
+     else do (format t "~%Invalid entry. Round over.") ;for testing (recomment later)
      until (or win (null response) (= i game-cutoff) time-is-up)
      finally (return (cond (time-is-up '(0 0)) 
 			   ((null response) nil)
