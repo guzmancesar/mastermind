@@ -5,8 +5,8 @@
     (declare (ignore SCSA last-response))
         (if (= *counter* 100)
             (setf *counter* 1)
-            (setf *counter* (1+ counter)))
-        (if (= counter 1)
+            (setf *counter* (1+ *counter*)))
+        (if (= *counter* 1)
             (setf *player-guess* (make-list board :initial-element '0))
             (setf *player-guess* (increment *player-guest* colors)))
         ;; return list of letters converted from *player-guess*
