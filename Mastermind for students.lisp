@@ -289,3 +289,4 @@
 (defun Boring (board colors SCSA last-response)
   (declare (ignore SCSA last-response))
     (make-list board :initial-element (random-chooser colors)))
+    

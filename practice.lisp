@@ -6,15 +6,17 @@
         (if (= *counter* 100)
             (setf *counter* 1)
             (setf *counter* (1+ counter)))
-        (cond 
-            ((= counter 1) (setf *player-guess* (make-list board :initial-element '0))))
-
+        (if (= counter 1)
+            (setf *player-guess* (make-list board :initial-element '0))
+            (setf *player-guess* (increment *player-guest* colors)))
+        ;; return list of letters converted from *player-guess*
 )
 
-(defun list-to-int (x)
+(defun increment (x colors)
     (loop for i from (1- (length x)) downto 0
-        collect (* (expt 10 (- (length x) (1+ i))) (nth i x)) into nums
-        finally (return (apply '+ nums))))
-
-(defun int-to-list (x)
-    )
+        if (= (nth i x) (1- (length colors)))
+            do (setf (nth i x) 0)
+        else 
+            do (setf (nth i x) (1+ (nth i x))) 
+            and do (return x)
+        finally (return x)))
