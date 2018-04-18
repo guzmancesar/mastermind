@@ -1,4 +1,3 @@
-(defvar *counter* 0)
 (defvar *player-guess* '())
 
 (defun Sequential (board colors SCSA last-response)
