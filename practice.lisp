@@ -4,9 +4,7 @@
     (declare (ignore SCSA))
         (if (equal last-response nil)
             (setf *player-guess* (make-list board :initial-element 'A))
-            (increment *player-guess* colors)) ;do setf if this doesn't work
-        ; return list of letters converted from *player-guess*
-)
+            (increment *player-guess* colors)))
 
 (defun increment (x colors)
     (loop for i from (1- (length x)) downto 0
