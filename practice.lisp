@@ -1,10 +1,10 @@
-(defvar *player-guess* '())
+(defvar *sequential-guess* '())
 
 (defun Sequential (board colors SCSA last-response)
     (declare (ignore SCSA))
         (if (equal last-response nil)
-            (setf *player-guess* (make-list board :initial-element 'A))
-            (increment *player-guess* colors)))
+            (setf *sequential-guess* (make-list board :initial-element 'A))
+            (increment *sequential-guess* colors)))
 
 (defun increment (x colors)
     (loop for i from (1- (length x)) downto 0
