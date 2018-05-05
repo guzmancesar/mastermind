@@ -5,12 +5,15 @@
 (defparameter *permutation-rate* 0.03)
 (defparameter *inversion-rate* 0.02 )
 (defparameter *slick-value* 4 ); what should be the value?
+(defparameter *maxgen* 100)
+(defparameter *maxsize* 150)
 ;; likely are more parameters to add
 
 (defvar *guesses* nil)
 (defvar *responses* nil)
 (defvar *player-guess* nil)
 (defvar *population* nil)
+(defvar *eligible-set* nil)
 
 (defun make-weighted-list (population)
     ;; population should be a list containing tuples (e f), where e is a given element
@@ -76,10 +79,17 @@
   (if (equal last-response NIL)
       (progn; First round set up
 	(setf *population* (initialize-population *population-size* board colors))
-	(print *population*)
 	(setf *player-guess* (first-guess board)))
       (progn; Other rounds
-	(print 'else)
+	;keep track of all previous guesses and responses
+	(setf *guesses* (append *guesses* (list *player-guess*)))
+	(setf *responses* (append *responses* (list last-response)))
+	;;WHILE LOOP STARTS unitl *maxgen* or *maxsize*
+	;;create new population-> calls crossover, mutation, inversion and permutation
+	;;calculate fitness of all elements of the new population
+	;;add eligible combinations to *eligible-set*
+	;;END WHILE
+	;; choose guess from *eligible-set*
 	(setf *player-guess* (insert-colors board colors)))))
       
       
