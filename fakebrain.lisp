@@ -36,7 +36,11 @@
 (defun two-point (parent-one parent-two)
     ;; two point crossover
     ;; TO DO: make sure crossover points are not first or last element!
-    )
+    (let* ((second-split (random (length parent-one)))
+            (first-split (random (length (subseq parent-one 0 second-split)))))
+            (append (subseq parent-one 0 first-split) 
+                (subseq parent-two first-split second-split) 
+                (subseq parent-one second-split (length parent-one)))))
 
 (defun crossover (parent-one parent-two)
     ;; produces one child from parents one and two using either
