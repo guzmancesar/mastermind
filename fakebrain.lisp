@@ -56,6 +56,14 @@
         ;; mutate, permutate, etc.
         ;; return new population
         )
+(defun inversion-GA (child-list size)
+  ;;given a list it chooses two random random points (indexes)
+  ;; it reverse the sublist between the points
+  (let ((x (random size)))
+    (let ((y (random size)))
+      (if (< x y)
+	  (append (append (subseq child-list 0 x) (reverse (subseq child-list x y))) (subseq child-list y size))
+          (append (append (subseq child-list 0 y) (reverse (subseq child-list y x))) (subseq child-list x size))))))	  	    
 
 (defun first-guess (size); first version/ make more robust later
   (case size
