@@ -1,14 +1,16 @@
 ;; Main player using genetic algorithm
 
 (defparameter *population-size* 150)
-(defparameter *mutation-rate*  )
-(defparameter *permutation-rate*  )
-(defparameter *inversion-rate*  )
-(defparameter *slick-value*  )
+(defparameter *mutation-rate* 0.03 )
+(defparameter *permutation-rate* 0.03)
+(defparameter *inversion-rate* 0.02 )
+(defparameter *slick-value* 4 ); what should be the value?
 ;; likely are more parameters to add
 
 (defvar *guesses* nil)
 (defvar *responses* nil)
+(defvar *player-guess* nil)
+(defvar *population* nil)
 
 (defun make-weighted-list (population)
     ;; population should be a list containing tuples (e f), where e is a given element
@@ -51,3 +53,33 @@
         ;; mutate, permutate, etc.
         ;; return new population
         )
+
+(defun first-guess (size); first version/ make more robust later
+  (case size
+    (2 '(A A))
+    (3 '(A A B))
+    (4 '(A A B C))
+    (5 '(A A B C D))
+    (6 '(A A B B C D))
+    (7 '(A A B B C C D))
+    (8 '(A A B B C C D E))
+    (9 '(A A B B C C D D E))
+    (10 '(A A B B C C D D E F))
+    (11 '(A A B B C C D D E E F))
+    (12 '(A A B B C C D D E E F G))))
+
+(defun initialize-population (size board colors)
+  (loop for i from 1 to size
+       collect (list (insert-colors board colors) (/ 1 size))))
+  
+(defun FakeBrain (board colors SCSA last-response)
+  (if (equal last-response NIL)
+      (progn; First round set up
+	(setf *population* (initialize-population *population-size* board colors))
+	(print *population*)
+	(setf *player-guess* (first-guess board)))
+      (progn; Other rounds
+	(print 'else)
+	(setf *player-guess* (insert-colors board colors)))))
+      
+      
