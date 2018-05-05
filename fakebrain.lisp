@@ -14,6 +14,7 @@
     ;; population should be a list containing tuples (e f), where e is a given element
     ;; and f is its corresponding fitness score
     ;; fitness scores should be standardized (falling the range 0 to 1)
+    ;; reutrns eighted list where elements e have NO attached fitness scores
     (loop for element in population
         append (make-list (ceiling (* (second element) *weighting-constant*)) :initial-element (first element))))
 
