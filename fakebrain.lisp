@@ -68,9 +68,16 @@
         for parent-two = (random-pick old-population)
         ;; create child via crossover
         for child = (crossover parent-one parent-two)
-        ;; mutate, permutate, etc.
+        ;; mutate
+        for child-m = (mutation child *mutation-rate* colors)
+        ;; permutate
+        for child-mp = 
+        ;; inversion
+        for child-mpi = (inversion-GA chid-mp (length child-mp))
         ;; return new population
+        collect child-mpi
         )
+
 (defun inversion-GA (child-list size)
   ;;given a list it chooses two random random points (indexes)
   ;; it reverse the sublist between the points
@@ -79,8 +86,6 @@
       (if (< x y)
 	  (append (append (subseq child-list 0 x) (reverse (subseq child-list x y))) (subseq child-list y size))
           (append (append (subseq child-list 0 y) (reverse (subseq child-list y x))) (subseq child-list x size))))))	  	    
-
-
 
 ;counts the number of each color in a guess into an array and returns the array
 (defun custom-color-counter (guess colors)
@@ -130,7 +135,7 @@
        collect (list (insert-colors board colors) (/ 1 size))))
   
 (defun FakeBrain (board colors SCSA last-response)
-  (if (equal last-response NIL)
+  (if (null last-response)
       (progn; First round set up
 	(setf *population* (initialize-population *population-size* board colors))
 	(setf *player-guess* (first-guess board)))
