@@ -49,7 +49,7 @@
         (one-point parent-one parent-two)
         (two-point parent-one parent-two)))
 
-(defun mutate (child colors)
+(defun mutation-GA (child colors)
     (let ((m-index (1+ (random (1- (length child))))))
         (append (subseq child 0  m-index) 
             (list (nth (random (length colors)) colors)) 
@@ -57,8 +57,22 @@
 
 (defun mutation (child rate colors)
     (if (>= rate (random 1.0))
-        (mutate child colors)
+        (mutation-GA child colors)
         child))
+
+(defun inversion-GA (child-list size)
+  ;;given a list it chooses two random random points (indexes)
+  ;; it reverse the sublist between the points
+  (let ((x (random size)))
+    (let ((y (random size)))
+      (if (< x y)
+	  (append (append (subseq child-list 0 x) (reverse (subseq child-list x y))) (subseq child-list y size))
+          (append (append (subseq child-list 0 y) (reverse (subseq child-list y x))) (subseq child-list x size))))))
+
+(defun inversion (child rate)
+    (if (> rate (random 1.0))
+        (inversion-GA child (length child))
+        child))	
 
 (defun make-new-generation (old-population colors)
     ;; population should be the WEIGHTED list of elements e (with NO fitness scores attached)
@@ -73,19 +87,10 @@
         ;; permutate
         for child-mp = 
         ;; inversion
-        for child-mpi = 
+        for child-mpi = (inversion child-mpi *inversion-rate*)
         ;; return new population
         collect child-mpi
-        )
-
-(defun inversion-GA (child-list size)
-  ;;given a list it chooses two random random points (indexes)
-  ;; it reverse the sublist between the points
-  (let ((x (random size)))
-    (let ((y (random size)))
-      (if (< x y)
-	  (append (append (subseq child-list 0 x) (reverse (subseq child-list x y))) (subseq child-list y size))
-          (append (append (subseq child-list 0 y) (reverse (subseq child-list y x))) (subseq child-list x size))))))	  	    
+        )  	    
 
 ;counts the number of each color in a guess into an array and returns the array
 (defun custom-color-counter (guess colors)
