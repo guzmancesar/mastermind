@@ -61,6 +61,31 @@
         (mutation-GA child colors)
         child))
 
+(defun random-chooser (list)
+  (nth (random (length list)) list))
+
+
+
+(defun permutation (parent)
+
+	   (let ((*indexlist* ()) (*indexlist2* ()) ;temp variables 
+		 (pos1 0) (pos2 0) (temp 0) (temp2 0) 
+		 (ret ())) 
+	    (loop for x from 0 to (- (length parent) 1) ;list of numbers from zero to len - 1
+		collect x into my-list
+		finally (setq *indexlist* my-list))
+	    (setq *indexlist2* *indexlist*)
+	    (setq pos1 (random-chooser *indexlist*))
+	    (setq *indexlist2* (remove pos1 *indexlist2*))
+	    (setq pos2 (random-chooser *indexlist2*))
+	    (setq temp pos2)
+	    (setq ret parent)
+	    (setq temp2 (nth pos1 parent))
+	    (setq temp (nth pos2 parent))
+	    (setf (nth pos1 ret) temp)  ;swap here
+	    (setf (nth pos2 ret) temp2) ;swao 
+	    (return-from permutate ret))) ;parents stays the same, returns temp
+
 (defun inversion-GA (child-list size)
   ;;given a list it chooses two random random points (indexes)
   ;; it reverse the sublist between the points
