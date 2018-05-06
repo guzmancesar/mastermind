@@ -155,6 +155,23 @@
        (print response)
      when (not (and (eq (first score) (first response)) (eq (nth 1 score) (nth 1 response))))
      do(return 'T))))
+
+
+
+(defun fitness-score (current guesses responses colors val-a val-b turn-i pos-P)
+  (let ((fitnessX 0))
+    (let ((fitnessY 0))
+      (let ((score 0))
+	(loop for guess in guesses for response in responses
+	   do (setf score ( custom-process-guess guess current colors))
+	     (print score)
+	     (setq fitnessX (+ fitnessX (abs (- (first score) (first response)))))
+	     (setq fitnessY (+ fitnessY (abs (- (nth 1 score) (nth 1 response)))))
+	     (print fitnessX)
+	     (print fitnessY))
+	(+  (* val-a fitnessX) fitnessY (* val-b pos-P (- turn-i 1))))))) 
+
+
   
 (defun FakeBrain (board colors SCSA last-response)
   (if (null last-response)
