@@ -56,7 +56,7 @@
             (subseq child (1+ m-index) (length child)))))
 
 (defun mutation (child rate colors)
-    (if (> rate (random 1.0))
+    (if (>= rate (random 1.0))
         (mutate child colors)
         child))
 
@@ -73,7 +73,7 @@
         ;; permutate
         for child-mp = 
         ;; inversion
-        for child-mpi = (inversion-GA chid-mp (length child-mp))
+        for child-mpi = 
         ;; return new population
         collect child-mpi
         )
