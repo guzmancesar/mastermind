@@ -78,7 +78,7 @@
 
 (defun make-new-generation (old-population colors)
     ;; population should be the WEIGHTED list of elements e (with NO fitness scores attached)
-    loop for element in old-population
+    (loop for element in old-population
         ;; randomly choose two parents
         for parent-one = (random-pick old-population)
         for parent-two = (random-pick old-population)
@@ -91,8 +91,7 @@
         ;; inversion
         for child-mpi = (inversion child-mpi *inversion-rate*)
         ;; return new population
-        collect child-mpi
-        )  	    
+        collect child-mpi))  	    
 
 ;counts the number of each color in a guess into an array and returns the array
 (defun custom-color-counter (guess colors)
