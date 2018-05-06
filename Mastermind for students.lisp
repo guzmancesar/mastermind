@@ -1,6 +1,6 @@
-;;CODE PROVIDED BY PROF SUSAN L. EPSTEIN OF CUNY HUNTER COLLEGE
+;; Code provided by Prof. Susan L. Epstein of CUNY Hunter College
 
-;;*******************************************************************************************
+;;;*******************************************************************************************
 ;;;THIS FILE DEFINES THE GAME ENVIRONMENT AND PROVIDES A SAMPLE PLAYER THAT MAKES RANDOM MOVES
 ;;;*******************************************************************************************
 
@@ -156,12 +156,12 @@
      for response = (respond-to-guess self guess i)
      for win = (equal (first response) 'win)
      for time-is-up = (> (get-internal-run-time) stop-time)
-     do (print (list (get-internal-run-time) stop-time)) ;for testing (recomment later)
-     when win ;for testing (recomment later)
-     do (format t "~%Win. Round over.") ;for testing (recomment later)
-     else when response ;for testing (recomment later)
-     do (format t "~%score ~a" response) ;for testing (recomment later)
-     else do (format t "~%Invalid entry. Round over.") ;for testing (recomment later)
+     ;do (print (list (get-internal-run-time) stop-time))
+     ;when win
+     ;do (format t "~%Win. Round over.")
+     ;else when response
+     ;do (format t "~%score ~a" response)
+     ;else do (format t "~%Invalid entry. Round over.")
      until (or win (null response) (= i game-cutoff) time-is-up)
      finally (return (cond (time-is-up '(0 0)) 
 			   ((null response) nil)
@@ -291,4 +291,3 @@
 (defun Boring (board colors SCSA last-response)
   (declare (ignore SCSA last-response))
     (make-list board :initial-element (random-chooser colors)))
-    
