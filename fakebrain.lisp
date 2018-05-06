@@ -140,6 +140,21 @@
 (defun initialize-population (size board colors)
   (loop for i from 1 to size
        collect (list (insert-colors board colors) (/ 1 size))))
+
+
+(defun not-eligible (candidate guesses responses colors)
+  ;; Takes an element from new population and checks if it can be added to *eligible-set*
+  ;; returns T if candidate is NOT eligible for admission to *eligible-set*
+  ;; ELIGIBILITY-> treat all previous guesses as if they were secret codes
+  ;; get score for candidate aganist previous guess if the difference between their scores is zero 
+  ;; then candidate is eligible
+  (let ((score nil))
+  (loop for guess in guesses for response in responses
+     do (setf score ( custom-process-guess guess candidate colors))
+       (print score)
+       (print response)
+     when (not (and (eq (first score) (first response)) (eq (nth 1 score) (nth 1 response))))
+     do(return 'T))))
   
 (defun FakeBrain (board colors SCSA last-response)
   (if (null last-response)
