@@ -56,6 +56,7 @@
             (subseq child (1+ m-index) (length child)))))
 
 (defun mutation (child rate colors)
+    ;; mutation done with probability of rate
     (if (>= rate (random 1.0))
         (mutation-GA child colors)
         child))
@@ -70,6 +71,7 @@
           (append (append (subseq child-list 0 y) (reverse (subseq child-list y x))) (subseq child-list x size))))))
 
 (defun inversion (child rate)
+    ;; inversion done with probability of rate
     (if (> rate (random 1.0))
         (inversion-GA child (length child))
         child))	
