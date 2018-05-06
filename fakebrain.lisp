@@ -49,6 +49,17 @@
         (one-point parent-one parent-two)
         (two-point parent-one parent-two)))
 
+(defun mutate (child colors)
+    (let ((m-index (1+ (random (1- (length child))))))
+        (append (subseq child 0  m-index) 
+            (list (nth (random (length colors)) colors)) 
+            (subseq child (1+ m-index) (length child)))))
+
+(defun mutation (child rate colors)
+    (if (> rate (random 1.0))
+        (mutate child colors)
+        child))
+
 (defun make-new-generation (old-population colors)
     ;; population should be the WEIGHTED list of elements e (with NO fitness scores attached)
     loop for element in old-population
