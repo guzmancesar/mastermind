@@ -69,6 +69,37 @@
 	  (append (append (subseq child-list 0 x) (reverse (subseq child-list x y))) (subseq child-list y size))
           (append (append (subseq child-list 0 y) (reverse (subseq child-list y x))) (subseq child-list x size))))))	  	    
 
+
+
+;counts the number of each color in a guess into an array and returns the array
+(defun custom-color-counter (guess colors)
+  (loop with tally = (make-array (length colors) :initial-element 0)
+     for peg in guess
+     for index = (spot peg)
+     do (incf (aref tally index))
+     finally (return tally)))
+
+;scores a guess, returning a two-element list (#exact #other) where other means "right color, wrong location"
+(defun custom-process-guess (answer guess colors)
+  (loop with answer = answer
+     with guess-color-count = (custom-color-counter guess colors)
+     with true-color-count = (custom-color-counter answer colors)
+     with exact-counter = 0
+     for entry in guess
+     for peg in answer
+     for exact = (equal entry peg)
+     when exact 
+     do (incf exact-counter)
+     and do (decf (aref guess-color-count (spot entry)))
+     and do (decf (aref true-color-count (spot entry)))
+     finally (return (list exact-counter (loop for i from 0 to (1- (length colors))
+                        for guessed = (aref true-color-count i)
+                        for true = (aref guess-color-count i)
+                        when (<= true guessed)
+                        sum true
+                        else sum guessed)))))
+
+
 (defun first-guess (size); first version/ make more robust later
   (case size
     (2 '(A A))
