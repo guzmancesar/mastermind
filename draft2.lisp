@@ -153,7 +153,8 @@
     (9 '(A A B B C C D D E))
     (10 '(A A B B C C D D E F))
     (11 '(A A B B C C D D E E F))
-    (12 '(A A B B C C D D E E F G))))
+    (12 '(A A B B C C D D E E F G))
+    (15 '(A A B B C C D D E E F F G G H))))
 
 (defun not-eligible (candidate guesses responses colors)
   ;; Takes an element from new population and checks if it can be added to *eligible-set*
