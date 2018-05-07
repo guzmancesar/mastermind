@@ -1,16 +1,16 @@
 ;; Main player using genetic algorithm
 
 (defparameter *population-size* 150)
-(defparameter *mutation-rate* 0.03 )
-(defparameter *permutation-rate* 0.03)
-(defparameter *inversion-rate* 0.02 )
+(defparameter *mutation-rate* 0.05)
+(defparameter *permutation-rate* 0.05)
+(defparameter *inversion-rate* 0.05)
 (defparameter *slick-value* 0.5); what should be the value?
 (defparameter *maxgen* 100)
 (defparameter *maxsize* 50)
 (defparameter *a-weight* 1)
 (defparameter *b-weight* 2)
 
-(defparameter *weighting-constant* 300)
+(defparameter *weighting-constant* 150)
 
 (defvar *guesses* nil)
 (defvar *responses* nil)
@@ -56,7 +56,7 @@
 (defun crossover (parent-one parent-two)
     ;; produces one child from parents one and two using either
     ;; one point crossover or two point crossover (0.5 probability for each)
-    (if (> 0.5 (random 1.0))
+    (if (>= 0.5 (random 1.0))
         (one-point parent-one parent-two)
         (two-point parent-one parent-two)))
 
@@ -83,7 +83,7 @@
 
 (defun inversion (child rate)
     ;; inversion done with probability of rate
-    (if (> rate (random 1.0))
+    (if (>= rate (random 1.0))
         (inversion-GA child (length child))
         child))	
 
@@ -205,6 +205,7 @@
         (first best)))   
   
 (defun FakeBrain (board colors SCSA last-response)
+    (declare (ignore SCSA))
     (if (null last-response)
         (progn; First round set up
             (setf *guesses* nil)
@@ -237,7 +238,7 @@
                                                     colors 
                                                     *a-weight* 
                                                     *b-weight*  
-                                                    (length *responses*)
+                                                    (1+ (third last-response)) ;; number of current guess
                                                     board)))
                                             new-pop)
                 ;; standardize fitness values
