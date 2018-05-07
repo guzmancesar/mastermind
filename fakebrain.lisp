@@ -38,8 +38,8 @@
     ;; TO DO: make sure crossover points are not first or last element!
     (let* ((second-split (random (length parent-one)))
             (first-split (random (length (subseq parent-one 0 second-split)))))
-            (append (subseq parent-one 0 first-split) 
-                (subseq parent-two first-split second-split) 
+            (append (subseq parent-one 0 first-split)
+                (subseq parent-two first-split second-split)
                 (subseq parent-one second-split (length parent-one)))))
 
 (defun crossover (parent-one parent-two)
@@ -51,8 +51,8 @@
 
 (defun mutation-GA (child colors)
     (let ((m-index (1+ (random (1- (length child))))))
-        (append (subseq child 0  m-index) 
-            (list (nth (random (length colors)) colors)) 
+        (append (subseq child 0  m-index)
+            (list (nth (random (length colors)) colors))
             (subseq child (1+ m-index) (length child)))))
 
 (defun mutation (child rate colors)
@@ -64,13 +64,20 @@
 (defun random-chooser (list)
   (nth (random (length list)) list))
 
-
+; returns list of n distinct random elements from given list
+(defun choose-n-random (n list)
+    (if (> n (length list))
+        (print 'error)
+        (loop for i from 1 to n
+            for choices = (copy-list list) then (set-difference choices (list chosen))
+            for chosen = (random-chooser choices)
+            collect chosen)))
 
 (defun permutation (parent)
 
-	   (let ((*indexlist* ()) (*indexlist2* ()) ;temp variables 
-		 (pos1 0) (pos2 0) (temp 0) (temp2 0) 
-		 (ret ())) 
+	   (let ((*indexlist* ()) (*indexlist2* ()) ;temp variables
+		 (pos1 0) (pos2 0) (temp 0) (temp2 0)
+		 (ret ()))
 	    (loop for x from 0 to (- (length parent) 1) ;list of numbers from zero to len - 1
 		collect x into my-list
 		finally (setq *indexlist* my-list))
@@ -83,7 +90,7 @@
 	    (setq temp2 (nth pos1 parent))
 	    (setq temp (nth pos2 parent))
 	    (setf (nth pos1 ret) temp)  ;swap here
-	    (setf (nth pos2 ret) temp2) ;swao 
+	    (setf (nth pos2 ret) temp2) ;swao
 	    (return-from permutate ret))) ;parents stays the same, returns temp
 
 (defun inversion-GA (child-list size)
@@ -99,7 +106,7 @@
     ;; inversion done with probability of rate
     (if (> rate (random 1.0))
         (inversion-GA child (length child))
-        child))	
+        child))
 
 (defun make-new-generation (old-population colors)
     ;; population should be the WEIGHTED list of elements e (with NO fitness scores attached)
@@ -112,11 +119,11 @@
         ;; mutate
         for child-m = (mutation child *mutation-rate* colors)
         ;; permutate
-        for child-mp = 
+        for child-mp =
         ;; inversion
         for child-mpi = (inversion child-mpi *inversion-rate*)
         ;; return new population
-        collect child-mpi))  	    
+        collect child-mpi))
 
 ;counts the number of each color in a guess into an array and returns the array
 (defun custom-color-counter (guess colors)
@@ -135,7 +142,7 @@
      for entry in guess
      for peg in answer
      for exact = (equal entry peg)
-     when exact 
+     when exact
      do (incf exact-counter)
      and do (decf (aref guess-color-count (spot entry)))
      and do (decf (aref true-color-count (spot entry)))
@@ -170,7 +177,7 @@
   ;; Takes an element from new population and checks if it can be added to *eligible-set*
   ;; returns T if candidate is NOT eligible for admission to *eligible-set*
   ;; ELIGIBILITY-> treat all previous guesses as if they were secret codes
-  ;; get score for candidate aganist previous guess if the difference between their scores is zero 
+  ;; get score for candidate aganist previous guess if the difference between their scores is zero
   ;; then candidate is eligible
   (let ((score nil))
   (loop for guess in guesses for response in responses
@@ -193,10 +200,45 @@
 	     (setq fitnessY (+ fitnessY (abs (- (nth 1 score) (nth 1 response)))))
 	     (print fitnessX)
 	     (print fitnessY))
-	(+  (* val-a fitnessX) fitnessY (* val-b pos-P (- turn-i 1))))))) 
+	(+  (* val-a fitnessX) fitnessY (* val-b pos-P (- turn-i 1)))))))
 
 
-  
+; SELECTION HELPER
+; sees if givenguess is still eligble after candidate is the guess and code is the code
+; ELIGIBILITY is determinded by pretending that candidate was the last guess, and code is the answer
+; uses not-eligible function with parameters (candidate guesses responses colors)
+; returns T if still eligible, NIL otherwise
+(defun guess-still-eligible (givenguess candidate code colors guesses responses)
+    (let ((response (custom-process-guess code candidate colors))) ; response to c with code c*
+    (let ((guessescopy (append guesses candidate)))
+    (let ((responsescopy (append responses response)))
+    (return-from guess-still-eligible (not (not-eligible givenguess guessescopy responsescopy colors)) )))))
+
+; SELECTION FUNCTION DEFINITION
+; chooses the most appropriate guess from the eligible guesses
+; PROCEDURE
+; 1. take a random selection set S ⊆ Eligible
+;    utilizes choose-n-random (n list)
+; 2. for each guess c ⊆ S and each c* ⊆ S/{c} functioning as a secret code,
+;    check how many codes in S/{c,c*} remain eligible
+; 3. pick the guess with the minimum average number of remaining eligible codes
+
+(defun select-guess-from-eligible (eligible colors guesses responses)
+    (let ((random-selection (choose-n-random eligible))) ; random selection
+        (let ((minindex -1)) ; index of guess with current minimum
+            (let ((minimum 150)) ; current minimum tracker for remaining eligble codes
+    (loop for candidate in eligible for i from 0 ; pick every possible c
+        (let ((eligibleremaining 0))
+        (loop for functioningcode in eligible unless (eql candidate functioningcode) ; pick every possible c* != c
+            (loop for givenguess in eligible unless (or (eql givenguess candidate) (eql givenguess functioningcode) ) ; pick every guess
+                when (guess-still-eligble givenguess candidate functioningcode colors guesses responses)
+                    do (incf eligibleremaining) ))
+        (when (< eligibleremaining minimum)
+            (progn (setf minindex i) (setf minimum eligibleremaining)))))
+    (return-from select-guess-from-eligible (nth minindex eligible))))))
+
+
+
 (defun FakeBrain (board colors SCSA last-response)
   (if (null last-response)
       (progn; First round set up
@@ -212,6 +254,4 @@
 	;;add eligible combinations to *eligible-set*
 	;;END WHILE
 	;; choose guess from *eligible-set*
-	(setf *player-guess* (insert-colors board colors)))))
-      
-      
+	(setf *player-guess* (select-guess-from-eligible *eligible-set* colors *guesses* *responses*)))))
