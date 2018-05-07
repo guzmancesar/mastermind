@@ -186,6 +186,8 @@
     (-  (* val-b pos-P (- turn-i 1)) (* val-a fitnessX) fitnessY)))
 
 (defun standardize-fitness-scores (population)
+    ;; takes population with elements (e f), where e is a candidate and f its fitness score
+    ;; and standardizes the fitness scores (0 to 1)
     (let ((total (loop for element in population
                     sum (second element))))
         (loop for element in population
@@ -196,6 +198,9 @@
        collect (list (insert-colors board colors) (/ 1 size))))
 
 (defun most-similar (eligible-set colors)
+    ;; returns the candidate in the set of eligible guesses that is the most
+    ;; similar to the others, the logic being that playing this guess will shrink
+    ;; the size of the eligible set the most upon the next guess
     (let ((best (list (first eligible-set) 0)))
         (loop for i in eligible-set
 		    for l = (loop for j in eligible-set
