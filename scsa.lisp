@@ -1,3 +1,18 @@
+;; code that should be added to FakeBrain function for ab-color
+;; for initial guess
+(if (eql SCSA 'ab-color) 
+    (progn 
+        (setf colors '(A B))
+        (setf *player-guess* (loop for c from 1 to board
+                                when (evenp c)
+                                collect (first colors)
+                                when (oddp c)
+                                collect (second colors))))
+	(setf *player-guess* (first-guess board)))
+;;for subsequent guesses
+(cond ((eql SCSA 'ab-color) (setf colors '(A B))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun two-color-scsa (current)
     ;; checks if current element has two colors
     (let ((color-number (length (remove-duplicates current))))
