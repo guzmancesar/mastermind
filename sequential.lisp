@@ -1,3 +1,5 @@
+;; Player guesses in simplest way possible (A A A A), (A A A B), (A A B A), (A A B B ), ...
+
 (defvar *sequential-guess* '())
 
 (defun increment (guess colors)
