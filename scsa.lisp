@@ -10,8 +10,9 @@
     ;; checks if the current element has duplicates or not
     (loop for e in current
         when (member e (rest (member e current)))
-        do (return-from only-once-scsa nil)
-        finally (return-from only-once-scsa T)))
+        ;; returns arbitrary bonus points (20) if no duplicates
+        do (return-from only-once-scsa 0)
+        finally (return-from only-once-scsa 20)))
 
 (defun scsa-match (current SCSA)
     (cond ((eql SCSA 'two-color-alternating) (two-color-alternating-scsa current))
