@@ -203,20 +203,20 @@
 	(+  (* val-a fitnessX) fitnessY (* val-b pos-P (- turn-i 1)))))))
 
 
-; SELECTION HELPER
-; sees if givenguess is still eligble after candidate is the guess and code is the code
-; ELIGIBILITY is determinded by pretending that candidate was the last guess, and code is the answer
+;; SELECTION HELPER
+;; sees if givenguess is still eligble after candidate is the guess and code is the code
+;; ELIGIBILITY is determinded by pretending that candidate was the last guess, and code is the answer
 ; uses not-eligible function with parameters (candidate guesses responses colors)
 ; returns T if still eligible, NIL otherwise
 (defun guess-still-eligible (givenguess candidate code colors guesses responses)
     (let ((response (custom-process-guess code candidate colors))) ; response to c with code c*
-    (let ((guessescopy (append guesses candidate)))
-    (let ((responsescopy (append responses response)))
+    (let ((guessescopy (append guesses candidate))) ; pretend that we made guess c
+    (let ((responsescopy (append responses response))) ; pretend that guess c got response
     (return-from guess-still-eligible (not (not-eligible givenguess guessescopy responsescopy colors)) )))))
 
-; SELECTION FUNCTION DEFINITION
-; chooses the most appropriate guess from the eligible guesses
-; PROCEDURE
+;; SELECTION FUNCTION DEFINITION
+;; chooses the most appropriate guess from the eligible guesses
+;; PROCEDURE
 ; 1. take a random selection set S ⊆ Eligible
 ;    utilizes choose-n-random (n list)
 ; 2. for each guess c ⊆ S and each c* ⊆ S/{c} functioning as a secret code,
@@ -226,16 +226,23 @@
 (defun select-guess-from-eligible (eligible colors guesses responses)
     (let ((random-selection (choose-n-random eligible))) ; random selection
         (let ((minindex -1)) ; index of guess with current minimum
-            (let ((minimum 150)) ; current minimum tracker for remaining eligble codes
+            (let ((minimum 150)) ; current minimum tracker for average remaining eligble codes
     (loop for candidate in eligible for i from 0 ; pick every possible c
-        (let ((eligibleremaining 0))
+        (let ((eligibleremainingsum 0)) ; track how many eligible guesses remain on average
+            (let ((count 0))
         (loop for functioningcode in eligible unless (eql candidate functioningcode) ; pick every possible c* != c
-            (loop for givenguess in eligible unless (or (eql givenguess candidate) (eql givenguess functioningcode) ) ; pick every guess
+            (let ((eligibleremaining 0)) ; track with this particular code as functioning answer
+            ; pick every currently eligible guess that is not c or c*
+            (loop for givenguess in eligible for count from 1 unless (or (eql givenguess candidate) (eql givenguess functioningcode) )
                 when (guess-still-eligble givenguess candidate functioningcode colors guesses responses)
-                    do (incf eligibleremaining) ))
-        (when (< eligibleremaining minimum)
-            (progn (setf minindex i) (setf minimum eligibleremaining)))))
-    (return-from select-guess-from-eligible (nth minindex eligible))))))
+                    do (incf eligibleremaining) ) ; add 1 to counter if currently eligible guess is still eligible
+            (setf eligibleremainingsum (+ eligibleremainingsum eligibleremaining)))) ; add total eligible guesses to sum
+        ; calculate average after all functioning answers for given candidate have been processed
+        (setf eligibleremainingaverage (/ eligibleremainingsum count))
+        ; compare to minimum
+        (when (< eligibleremainingaverage minimum)
+            (progn (setf minindex i) (setf minimum eligibleremainingaverage))))))) ; set new minimum and index
+    (return-from select-guess-from-eligible (nth minindex eligible)))))
 
 
 
