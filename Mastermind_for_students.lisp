@@ -1,4 +1,4 @@
-;; Code provided by Prof. Susan L. Epstein of CUNY Hunter College
+;; Code provided by Prof Susan L. Epstein of CUNY Hunter College
 
 ;;;*******************************************************************************************
 ;;;THIS FILE DEFINES THE GAME ENVIRONMENT AND PROVIDES A SAMPLE PLAYER THAT MAKES RANDOM MOVES
@@ -156,12 +156,12 @@
      for response = (respond-to-guess self guess i)
      for win = (equal (first response) 'win)
      for time-is-up = (> (get-internal-run-time) stop-time)
-     ;do (print (list (get-internal-run-time) stop-time))
-     ;when win
-     ;do (format t "~%Win. Round over.")
-     ;else when response
-     ;do (format t "~%score ~a" response)
-     ;else do (format t "~%Invalid entry. Round over.")
+     do (print (list (get-internal-run-time) stop-time)) ;; for debugging
+     when win ;; for debugging
+     do (format t "~%Win. Round over.") ;; for debugging
+     else when response ;; for debugging
+     do (format t "~%score ~a" response) ;; for debugging
+     else do (format t "~%Invalid entry. Round over.") ;; for debugging
      until (or win (null response) (= i game-cutoff) time-is-up)
      finally (return (cond (time-is-up '(0 0)) 
 			   ((null response) nil)

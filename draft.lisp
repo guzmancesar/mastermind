@@ -6,11 +6,11 @@
 (defparameter *inversion-rate* 0.02 )
 (defparameter *slick-value* 0.5); what should be the value?
 (defparameter *maxgen* 100)
-(defparameter *maxsize* 5)
+(defparameter *maxsize* 50)
 (defparameter *a-weight* 1)
-(defparameter *b-weight* 1)
-;; likely are more parameters to add
-(defparameter *weighting-constant* 100)
+(defparameter *b-weight* 2)
+
+(defparameter *weighting-constant* 300)
 
 (defvar *guesses* nil)
 (defvar *responses* nil)
@@ -24,6 +24,9 @@
     ;; fitness scores should be standardized (falling the range 0 to 1)
     ;; reutrns weighted list where elements e have NO attached fitness scores
     (loop for element in population
+        ;; if fitness is negative, make zero
+        do (when (> 0 (second element))
+                (setf (second element) 0))
         append (make-list (ceiling (* (second element) *weighting-constant*)) :initial-element (first element))))
 
 (defun random-pick (population)
@@ -178,59 +181,84 @@
 	     (setq fitnessY (+ fitnessY (abs (- (nth 1 score) (nth 1 response))))))
 	     ;;(print fitnessX)
 	     ;;(print fitnessY))
-	(+  (* val-a fitnessX) fitnessY (* val-b pos-P (- turn-i 1))))) 
+    ;; two versions of fitness function! first is from paper, second is reordered
+	;; (+  (* val-a fitnessX) fitnessY (* val-b pos-P (- turn-i 1)))))
+    (-  (* val-b pos-P (- turn-i 1)) (* val-a fitnessX) fitnessY)))
+
+(defun standardize-fitness-scores (population)
+    (let ((total (loop for element in population
+                    sum (second element))))
+        (loop for element in population
+            collect (list (first element) (/ (second element) total)))))
 
 (defun initialize-population (size board colors)
   (loop for i from 1 to size
        collect (list (insert-colors board colors) (/ 1 size))))
+
+(defun most-similar (eligible-set colors)
+    (let ((best (list (first eligible-set) 0)))
+        (loop for i in eligible-set
+		    for l = (loop for j in eligible-set
+			        sum (apply '+ (custom-process-guess i j colors)))
+		    do (when (> l (second best))
+                    (setf best (list i l))))
+        (first best)))   
   
 (defun FakeBrain (board colors SCSA last-response)
     (if (null last-response)
-      (progn; First round set up
-	    (setf *player-guess* (first-guess board))
-        *player-guess*)
-      (progn; Other rounds
-        ;; initialize population
-        (setf *population* (initialize-population *population-size* board colors))
-        ;; initialize eligible set (make empty)
-        (setf *eligible-set* nil)
-	    ;keep track of all previous guesses and responses
-	    (setf *guesses* (append *guesses* (list *player-guess*)))
-	    (setf *responses* (append *responses* (list last-response)))
-	    ;;WHILE LOOP STARTS until *maxgen* or *maxsize*
-        (loop for mgen upto *maxgen*
-            for eligible-set-size = (length *eligible-set*)
-            while (> *maxsize* eligible-set-size)
-            ;; make weighted list according to fitness out of parent population
-            for parent-pool = (make-weighted-list *population*)
-	        ;;create new population-> calls crossover, mutation, inversion and permutation
-            for new-pop = (make-new-generation parent-pool colors)
-	        ;;calculate fitness of all elements of the new population
-            for new-pop-with-fitness = (mapcar (lambda (element) 
-                                                    (list element (fitness-score element 
-                                                                                *guesses* 
-                                                                                *responses*
-                                                                                colors 
-                                                                                *a-weight* 
-                                                                                *b-weight*  
-                                                                                (length *responses*)
-                                                                                board)))
-                                                new-pop)
-            ;; NORM FITNESS VALUES!!!
-	        ;; add eligible combinations to *eligible-set*
-            ;; eligible combinations do NOT have fitness scores attached
-            for eligible-guesses = (loop for element-with-fitness in new-pop-with-fitness
-                                        for element = (first element-with-fitness)
-                                        when (not (not-eligible element *guesses* *responses* colors))
-                                        collect element)
-            ;; set population to the new population and append new eligible combinations
-            ;; to the previous set of eligible combinations
-            do (progn
-                    (print (length new-pop-with-fitness))
-                    (setf *population* new-pop-with-fitness)
-                    (setf *eligible-set* (append *eligible-set* eligible-guesses))))
-	    ;;END WHILE
-	    ;; choose guess from *eligible-set*
-        ;; make sure eligible-set is not empty!!
-	    (setf *player-guess* (random-pick *eligible-set*))
-        *player-guess*)))
+        (progn; First round set up
+            (setf *guesses* nil)
+            (setf *responses* nil)
+	        (setf *player-guess* (first-guess board))
+            *player-guess*)
+        (progn; Other rounds
+            ;; initialize population
+            (setf *population* (initialize-population *population-size* board colors))
+            ;; initialize eligible set (make empty)
+            (setf *eligible-set* nil)
+	        ;keep track of all previous guesses and responses
+	        (setf *guesses* (append *guesses* (list *player-guess*)))
+	        (setf *responses* (append *responses* (list last-response)))
+	        ;;WHILE LOOP STARTS until *maxgen* or *maxsize*
+            (loop for mgen upto *maxgen*
+                for eligible-set-size = (length *eligible-set*)
+                while (> *maxsize* eligible-set-size)
+                ;; make weighted list according to fitness out of parent population
+                for parent-pool = (make-weighted-list *population*)
+	            ;;create new population-> calls crossover, mutation, inversion and permutation
+                for new-pop = (make-new-generation parent-pool colors)
+	            ;;calculate fitness of all elements of the new population
+                for new-pop-with-fitness = (mapcar 
+                                            (lambda (element) 
+                                                (list element 
+                                                (fitness-score element 
+                                                    *guesses* 
+                                                    *responses*
+                                                    colors 
+                                                    *a-weight* 
+                                                    *b-weight*  
+                                                    (length *responses*)
+                                                    board)))
+                                            new-pop)
+                ;; standardize fitness values
+                for new-pop-with-standardized-fitness = (standardize-fitness-scores new-pop-with-fitness)
+	            ;; add eligible combinations to *eligible-set*
+                ;; eligible combinations do NOT have fitness scores attached
+                for eligible-guesses = (loop for element-with-fitness in new-pop-with-standardized-fitness
+                                            for element = (first element-with-fitness)
+                                            when (not (not-eligible element *guesses* *responses* colors))
+                                            collect element)
+                ;; set population to the new population and append new eligible combinations
+                ;; to the previous set of eligible combinations
+                do (progn
+                        (setf *population* new-pop-with-standardized-fitness)
+                        (setf *eligible-set* (append *eligible-set* eligible-guesses))))
+	        ;;END WHILE
+	        ;; choose guess from *eligible-set*
+            ;; make sure eligible-set is not empty!!
+	        (if (not *eligible-set*)
+                (setf *player-guess* (insert-colors board colors))
+                ;; either do random pick (dumb) or most-similar
+                ;; (setf *player-guess* (random-pick *eligible-set*)))
+                (setf *player-guess* (most-similar *eligible-set* colors)))
+            *player-guess*)))
