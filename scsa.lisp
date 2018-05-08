@@ -1,16 +1,29 @@
 ;; code that should be added to FakeBrain function for ab-color
 ;; for initial guess
-(if (eql SCSA 'ab-color) 
-    (progn 
-        (setf colors '(A B))
-        (setf *player-guess* (loop for c from 1 to board
-                                when (evenp c)
-                                collect (first colors)
-                                when (oddp c)
-                                collect (second colors))))
-	(setf *player-guess* (first-guess board)))
-;;for subsequent guesses
-(cond ((eql SCSA 'ab-color) (setf colors '(A B))))
+(defvar *colors* nil)
+
+;; this is super lazy, should do something better
+(defun ab-first-guess (size); first version/ make more robust later
+  (case size
+    (2 '(A A))
+    (3 '(A A B))
+    (4 '(A A B B))
+    (5 '(A A A B B))
+    (6 '(A A A B B B))
+    (7 '(A A A A B B B))
+    (8 '(A A A A B B B B))
+    (9 '(A A A A A B B B B))
+    (10 '(A A A A A B B B B B))
+    (11 '(A A A A A A B B B B B))
+    (12 '(A A A A A A B B B B B B))
+    (15 '(A A A A A A A A B B B B B B B))))
+
+(if (eql SCSA 'ab-color)
+    (setf *colors* '(A B))
+    (setf *colors* colors))
+(if (eql SCSA 'ab-color)
+    (setf *player-guess* (ab-first-guess board))
+    (setf *player-guess* (first-guess board)))    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun two-color-scsa (current)
