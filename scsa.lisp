@@ -41,7 +41,7 @@
         finally (return-from only-once-scsa T)))
 
 (defun scsa-match (current SCSA)
-    (cond ((eql SCSA 'two-color-alternating) (two-color-alternating-scsa current))
+    (cond ((eql SCSA 'two-color) (two-color-scsa current))
         ((eql SCSA 'only-once) (only-once-scsa current))
         ;; more scsa's to come
         (T T)))
