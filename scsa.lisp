@@ -30,8 +30,8 @@
     ;; checks if current element has two colors
     (let ((color-number (length (remove-duplicates current))))
         (if (= color-number 2)
-            (return-from two-color-alternating-scsa nil)
-            (return-from two-color-alternating-scsa T))))
+            (return-from two-color-scsa nil)
+            (return-from two-color-scsa T))))
 
 (defun only-once-scsa (current)
     ;; checks if the current element has duplicates or not
