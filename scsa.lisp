@@ -33,12 +33,12 @@
             (return-from two-color-scsa nil)
             (return-from two-color-scsa T))))
 
-    ;;checks if current element has colors that are not equal to first 2 positions
+    ;;checks if current element has colors that are not equal to first 2 positions, i.e.e alternating colors
 (defun alt-color-scsa (current)
-	   (loop for x from 0 to (- (length current) 1)
-		do (if (equal (nth x current) (nth (mod x 2) current))
-		  ()(return-from alt-color-scsa nil))
-		  finally (return-from alt-color-scsa t)))
+    (loop for x from 0 to (- (length current) 1)
+	do (if (equal (nth x current) (nth (mod x 2) current))
+	 ()(return-from alt-color-scsa nil))
+	finally (return-from alt-color-scsa t)))
 
 
 (defun only-once-scsa (current)
