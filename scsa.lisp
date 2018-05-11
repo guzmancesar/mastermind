@@ -40,6 +40,11 @@
 	 ()(return-from alt-color-scsa nil))
 	finally (return-from alt-color-scsa t)))
 
+(defun first-and-last (candidate)
+	  (if (equal (nth 0 candidate) 
+	      (nth (- (length candidate) 1) candidate))
+	       (return-from first-and-last t)
+	       (return-from first-and-last nil)))
 
 (defun only-once-scsa (current)
     ;; checks if the current element has duplicates or not
