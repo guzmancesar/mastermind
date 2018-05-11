@@ -18,7 +18,9 @@
 (defvar *player-guess* nil)
 (defvar *population* nil)
 (defvar *eligible-set* nil)
-(defvar *choices* nil)
+(defvar *2-choices* nil)
+(defvar *3-choices* nil)
+
 
 (defun make-weighted-list (population)
     ;; population should be a list containing tuples (e f), where e is a given element
@@ -211,15 +213,24 @@
             collect (list (first element) (/ (second element) total)))))
 
 (defun initialize-population (size board colors SCSA)
-  (if (eql SCSA 'two-color)
+  (case SCSA
+    (two-color
       (progn
 	(loop for i from 1 to size
-	   do(setf *choices* (loop for i from 1 to 2
+	   do(setf *2-choices* (loop for i from 1 to 2
 				for chosen = (random-chooser colors)
 				  collect chosen))
-	     collect (list (insert-colors board *choices*) (/ 1 size))))
-  (loop for i from 1 to size
-       collect (list (insert-colors board colors) (/ 1 size)))))
+	   collect (list (insert-colors board *2-choices*) (/ 1 size)))))
+      (usually-fewer
+       (progn
+	(loop for i from 1 to size
+	   do(setf *3-choices* (loop for i from 1 to 3
+				for chosen = (random-chooser colors)
+				collect chosen))
+	   collect (list (insert-colors board *3-choices*) (/ 1 size)))))
+      (T
+       (loop for i from 1 to size
+       collect (list (insert-colors board colors) (/ 1 size))))))
 
 (defun most-similar (eligible-set colors)
     ;; returns the candidate in the set of eligible guesses that is the most
@@ -302,7 +313,6 @@
         (progn; Other rounds
             ;; initialize population
             (setf *population* (initialize-population *population-size* board *legal-colors* SCSA))
-            (print *population*)
             ;; initialize eligible set (make empty)
             (setf *eligible-set* nil)
 	        ;keep track of all previous guesses and responses
