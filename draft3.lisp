@@ -212,6 +212,18 @@
         (loop for element in population
             collect (list (first element) (/ (second element) total)))))
 
+;; for creating population for SCSA Mystery-1
+(defun three-color-alternating( length colors)
+  (let ((first-color (first colors)))
+  (let ((second-color (second colors)))
+  (let ((third-color (third colors)))
+      (loop for i from 1 to length
+	when (eq (mod i 3) 0)
+	 collect first-color
+	 when (eq (mod i 3) 1)
+	  collect second-color
+	else collect third-color)))))
+
 (defun initialize-population (size board colors SCSA)
   (case SCSA
     (two-color
@@ -312,7 +324,8 @@
             *player-guess*)
         (progn; Other rounds
             ;; initialize population
-            (setf *population* (initialize-population *population-size* board *legal-colors* SCSA))
+	  (setf *population* (initialize-population *population-size* board *legal-colors* SCSA))
+	  (print *population*)
             ;; initialize eligible set (make empty)
             (setf *eligible-set* nil)
 	        ;keep track of all previous guesses and responses
