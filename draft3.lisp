@@ -213,33 +213,31 @@
             collect (list (first element) (/ (second element) total)))))
 
 ;; for creating population for SCSA Mystery-1
-(defun three-color-alternating( length colors)
+(defun three-color-alternating( board colors)
   (let ((first-color (first colors)))
   (let ((second-color (second colors)))
   (let ((third-color (third colors)))
-      (loop for i from 1 to length
-	when (eq (mod i 3) 0)
-	 collect first-color
-	 when (eq (mod i 3) 1)
-	  collect second-color
-	else collect third-color)))))
+    (loop for i from 0 to (- board 1)
+       collect (cond ((eq (mod i 3) 0) first-color)
+	             ((eq (mod i 3) 1) second-color)
+	             ((eq (mod i 3) 2) third-color)))))))
 
 (defun initialize-population (size board colors SCSA)
   (case SCSA
-    (two-color
+    ((or two-color mystery-2)
       (progn
 	(loop for i from 1 to size
-	   do(setf *2-choices* (loop for i from 1 to 2
-				for chosen = (random-chooser colors)
-				  collect chosen))
+	   do(setf *2-choices* (loop for i from 1 to 2 for chosen = (random-chooser colors) collect chosen))
 	   collect (list (insert-colors board *2-choices*) (/ 1 size)))))
       (usually-fewer
        (progn
 	(loop for i from 1 to size
-	   do(setf *3-choices* (loop for i from 1 to 3
-				for chosen = (random-chooser colors)
-				collect chosen))
+	   do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
 	   collect (list (insert-colors board *3-choices*) (/ 1 size)))))
+      (mystery-1
+       (progn (loop for i from 1 to size
+		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		 collect(list (three-color-alternating board *3-choices*) (/ 1 size)))))
       (T
        (loop for i from 1 to size
        collect (list (insert-colors board colors) (/ 1 size))))))
@@ -325,7 +323,7 @@
         (progn; Other rounds
             ;; initialize population
 	  (setf *population* (initialize-population *population-size* board *legal-colors* SCSA))
-	  (print *population*)
+	  (print *player-guess*)
             ;; initialize eligible set (make empty)
             (setf *eligible-set* nil)
 	        ;keep track of all previous guesses and responses
@@ -352,7 +350,7 @@
                                                     (1+ (third last-response)) ;; number of current guess
                                                     board)))
                                             new-pop)
-                ;; standardize fitness values
+	       ;; standardize fitness values
                 for new-pop-with-standardized-fitness = (standardize-fitness-scores new-pop-with-fitness)
 	            ;; add eligible combinations to *eligible-set*
                 ;; eligible combinations do NOT have fitness scores attached
@@ -373,4 +371,5 @@
                 ;; either do random pick (dumb) or most-similar
                 ;; (setf *player-guess* (random-pick *eligible-set*)))
                 (setf *player-guess* (select-guess-from-eligible *eligible-set* *legal-colors* *guesses* *responses*)))
+		(print *player-guess*)
             *player-guess*)))
