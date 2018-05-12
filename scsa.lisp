@@ -70,7 +70,7 @@
   (nth (random (length list)) list))
 
 
-(defun func (population-size colors len)
+(defun mystery-2 (population-size colors len)
 	   (let ((x ()) (y 0) (z 0)(k 0)(w ()) (f1 0) (f2 0) (f3 0)(f4 0))
 	   (loop for q from 0 to (/ population-size 3)
 	       collect (make-list len :initial-element (nth (mod z (length colors)) colors)) into newlist
@@ -110,4 +110,4 @@
 									 finally (progn 
 									 (setq w (append w nulist3))
 									 (setq x (append (list w) x)))))))
-		(return-from func x)))
+		(return-from mystery-2 x)))
