@@ -222,9 +222,17 @@
 	             ((eq (mod i 3) 1) second-color)
 	             ((eq (mod i 3) 2) third-color)))))))
 
+(defun two-alternating-colors (board colors)
+  (let ((first-color  (first colors)))
+    (let ((second-color (second colors)))
+      (loop for i from 0 to (- board 1)
+	 when (oddp i) collect first-color
+	   else collect second-color))))
+      
+
 (defun initialize-population (size board colors SCSA)
   (case SCSA
-    ((or two-color mystery-2)
+    (two-color
       (progn
 	(loop for i from 1 to size
 	   do(setf *2-choices* (loop for i from 1 to 2 for chosen = (random-chooser colors) collect chosen))
@@ -238,6 +246,17 @@
        (progn (loop for i from 1 to size
 		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
 		 collect(list (three-color-alternating board *3-choices*) (/ 1 size)))))
+      (two-color-alternating
+        (progn (loop for i from 1 to size
+		 do(setf *2-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		  collect(list (two-alternating-colors board *2-choices*) (/ 1 size)))))
+      (mystery-4
+        (progn (loop for i from 1 to size
+		 do(setf *2-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		  collect(list (two-alternating-colors board *2-choices*) (/ 1 size)))))
+      (prefer-fewer
+       (loop for i from 1 to size
+       collect (list (prefer-fewer board colors) (/ 1 size))))))
       (T
        (loop for i from 1 to size
        collect (list (insert-colors board colors) (/ 1 size))))))
@@ -323,7 +342,6 @@
         (progn; Other rounds
             ;; initialize population
 	  (setf *population* (initialize-population *population-size* board *legal-colors* SCSA))
-	  (print *player-guess*)
             ;; initialize eligible set (make empty)
             (setf *eligible-set* nil)
 	        ;keep track of all previous guesses and responses
