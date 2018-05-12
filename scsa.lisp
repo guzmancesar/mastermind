@@ -58,3 +58,56 @@
         ((eql SCSA 'only-once) (only-once-scsa current))
         ;; more scsa's to come
         (T T)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;Note population maker for myster-2 uses random-chooser function that epstein wrote
+;tested for lens from 4 (minimum peg size) to 10
+(defun random-chooser (list)
+  (nth (random (length list)) list))
+
+
+(defun func (population-size colors len)
+	   (let ((x ()) (y 0) (z 0)(k 0)(w ()) (f1 0) (f2 0) (f3 0)(f4 0))
+	   (loop for q from 0 to (/ population-size 3)
+	       collect (make-list len :initial-element (nth (mod z (length colors)) colors)) into newlist
+		   do (incf z)
+		   finally (setq x newlist)
+		)
+	   (if (= (mod len 2) 1)(setq f1 (+ (/ len 2) 1)) (setq f1(- len (/ len 2)))) ;counters will increment to these limits for the
+	   (if (= (mod len 2) 1)(setq f4 (ceiling (/ len 3))) (setq f4 (ceiling (/ len 3))));second and third set of lists 
+	   (if (= (mod len 2) 1)(setq f2 (+ (floor (/ len 3)) 1)) (setq f2 (ceiling (/ len 3))))
+	   (if (= (mod len 2) 1)(setq f3 (- len (+ f2 f4))) (setq f3 (- LEN (+ F2 F4))))
+	   (if (= len 4) (progn (setq f2 1) (setq f4 2) (setq f3 1)));hardcoded values for 4 because cieling = 2 and will make a 
+									;list of type (A A B B) for the third set 
+	   
+	   
+	   (loop for q4 from 0 to (/ population-size 3)
+		do (setq y (random-chooser colors))
+		do (setq z (random-chooser (remove y colors)))
+		  do (loop for q1 from 1 to (/ len 2)
+				collect y into nulist
+				do (setq w nulist)
+				finally (loop for q2 from 1 to f1
+							collect z into nulist2
+							finally (progn (setq w (append nulist nulist2))
+							(setq x (append (list w) x))))))
+		(loop for q5 from 0 to (/ population-size 3)
+			do (setq y (random-chooser colors))
+			do (setq z (random-chooser (remove y colors)))
+			do (setq k (random-chooser (remove z (remove y colors))))
+			do (loop for q1 from 1 to f4
+				collect y into nulist
+				do (setq w nulist)
+				finally (loop for q2 from 1 to f2
+							collect z into nulist2
+							do (setq w (append nulist nulist2))
+							finally (loop for q8 from 0 to (- f3 1)
+									 collect k into nulist3
+									 finally (progn 
+									 (setq w (append w nulist3))
+									 (setq x (append (list w) x)))))))
+		(return-from func x)))
