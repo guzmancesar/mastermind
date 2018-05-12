@@ -246,17 +246,20 @@
        (progn (loop for i from 1 to size
 		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
 		 collect(list (three-color-alternating board *3-choices*) (/ 1 size)))))
+      (mystery-3
+       (progn (loop for i from 1 to size
+		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		 collect(list (insert-colors board *3-choices*) (/ 1 size)))))
       (two-color-alternating
         (progn (loop for i from 1 to size
-		 do(setf *2-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
-		  collect(list (two-alternating-colors board *2-choices*) (/ 1 size)))))
+		  collect(list (two-color-alternating board colors) (/ 1 size)))))
       (mystery-4
         (progn (loop for i from 1 to size
 		 do(setf *2-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
 		  collect(list (two-alternating-colors board *2-choices*) (/ 1 size)))))
       (prefer-fewer
        (loop for i from 1 to size
-       collect (list (prefer-fewer board colors) (/ 1 size))))))
+	  collect (list (prefer-fewer board colors) (/ 1 size))))
       (T
        (loop for i from 1 to size
        collect (list (insert-colors board colors) (/ 1 size))))))
