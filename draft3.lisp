@@ -174,7 +174,26 @@
 	(12 '(A A B B C C D D E E F G))
 	(15 '(A A B B C C D D E E F F G G H)))))
 
-(defun not-eligible (candidate guesses responses colors)
+(defun first-and-last (candidate)
+	  (if (equal (nth 0 candidate) 
+	      (nth (- (length candidate) 1) candidate))
+	       (return-from first-and-last t)
+	       (return-from first-and-last nil)))
+
+(defun only-once-scsa (current)
+    ;; checks if the current element has duplicates or not
+    (loop for e in current
+        when (member e (rest (member e current)))
+        do (return-from only-once-scsa nil)
+        finally (return-from only-once-scsa T)))
+
+(defun scsa-match (current SCSA)
+    ;; will only use this for first-and-last and only-once scsa's
+    (cond ((eql SCSA 'two-color) (two-color-scsa current))
+        ((eql SCSA 'only-once) (only-once-scsa current))
+        (T T)))
+
+(defun not-eligible (candidate guesses responses colors SCSA)
   ;; Takes an element from new population and checks if it can be added to *eligible-set*
   ;; returns T if candidate is NOT eligible for admission to *eligible-set*
   ;; ELIGIBILITY-> treat all previous guesses as if they were secret codes
@@ -186,7 +205,8 @@
        ;;(print score)
        ;;(print response)
      when (not (and (eq (first score) (first response)) (eq (nth 1 score) (nth 1 response))))
-     do(return 'T))))
+     do(return 'T)
+     finally (not (scsa-match candidate SCSA)))))
 
 (defun fitness-score (current guesses responses colors val-a val-b turn-i pos-P)
   (let ((fitnessX 0)
@@ -335,11 +355,11 @@
 ;; ELIGIBILITY is determinded by pretending that candidate was the last guess, and code is the answer
 ; uses not-eligible function with parameters (candidate guesses responses colors)
 ; returns T if still eligible, NIL otherwise
-(defun guess-still-eligible (givenguess candidate code colors guesses responses)
+(defun guess-still-eligible (givenguess candidate code colors guesses responses SCSA)
     (let ((response (custom-process-guess code candidate colors))) ; response to c with code c*
     (let ((guessescopy (append guesses (list candidate)))) ; pretend that we made guess c
     (let ((responsescopy (append responses (list response)))) ; pretend that guess c got response
-    (return-from guess-still-eligible (not (not-eligible givenguess guessescopy responsescopy colors)) )))))
+    (return-from guess-still-eligible (not (not-eligible givenguess guessescopy responsescopy colors SCSA)) )))))
 
 ;; SELECTION FUNCTION DEFINITION
 ;; chooses the most appropriate guess from the eligible guesses
@@ -349,7 +369,7 @@
 ; 2. for each guess c ⊆ S and each c* ⊆ S/{c} functioning as a secret code,
 ;    check how many codes in S/{c,c*} remain eligible
 ; 3. pick the guess with the minimum average number of remaining eligible codes
-(defun select-guess-from-eligible (eligible colors guesses responses)
+(defun select-guess-from-eligible (eligible colors guesses responses SCSA)
     (let ((random-selection (choose-n-random-selection 25 eligible))) ; random selection
         (let ((minindex -1)) ; index of guess with current minimum
             (let ((minimum 150)) ; current minimum tracker for average remaining eligble codes
@@ -361,7 +381,7 @@
             do (let ((eligibleremaining 0)) ; track with this particular code as functioning answer
             ; pick every currently eligible guess that is not c or c*
             (loop for givenguess in random-selection unless (or (eql givenguess candidate) (eql givenguess functioningcode) )
-                when (guess-still-eligible givenguess candidate functioningcode colors guesses responses)
+                when (guess-still-eligible givenguess candidate functioningcode colors guesses responses SCSA)
                     do (incf eligibleremaining)) ; add 1 to counter if currently eligible guess is still eligible
             (setf eligibleremainingsum (+ eligibleremainingsum eligibleremaining))) ; add total eligible guesses to sum
             do (incf count))
@@ -418,7 +438,7 @@
                 ;; eligible combinations do NOT have fitness scores attached
                 for eligible-guesses = (loop for element-with-fitness in new-pop-with-standardized-fitness
                                             for element = (first element-with-fitness)
-                                            when (not (not-eligible element *guesses* *responses* *legal-colors*))
+                                            when (not (not-eligible element *guesses* *responses* *legal-colors* SCSA))
                                             collect element)
                 ;; set population to the new population and append new eligible combinations
                 ;; to the previous set of eligible combinations
@@ -432,6 +452,6 @@
                 (setf *player-guess* (insert-colors board *legal-colors*))
                 ;; either do random pick (dumb) or most-similar
                 ;; (setf *player-guess* (random-pick *eligible-set*)))
-                (setf *player-guess* (select-guess-from-eligible *eligible-set* *legal-colors* *guesses* *responses*)))
+                (setf *player-guess* (select-guess-from-eligible *eligible-set* *legal-colors* *guesses* *responses* SCSA)))
 		(print *player-guess*)
             *player-guess*)))
