@@ -228,7 +228,47 @@
       (loop for i from 0 to (- board 1)
 	 when (oddp i) collect first-color
 	   else collect second-color))))
-      
+
+(defun mystery-2-scsa (population-size colors len)
+	   (let ((x ()) (y 0) (z 0)(k 0)(w ()) (f1 0) (f2 0) (f3 0)(f4 0))
+	   (loop for q from 0 to (/ population-size 3)
+	       collect (make-list len :initial-element (nth (mod z (length colors)) colors)) into newlist
+		   do (incf z)
+		   finally (setq x newlist)
+		)
+	   (if (= (mod len 2) 1)(setq f1 (+ (/ len 2) 1)) (setq f1(- len (/ len 2))))
+	   (if (= (mod len 2) 1)(setq f4 (ceiling (/ len 3))) (setq f4 (ceiling (/ len 3))))
+	   (if (= (mod len 2) 1)(setq f2 (+ (floor (/ len 3)) 1)) (setq f2 (ceiling (/ len 3))))
+	   (if (= (mod len 2) 1)(setq f3 (- len (+ f2 f4))) (setq f3 (- LEN (+ F2 F4))))
+	   (if (= len 4) (progn (setq f2 1) (setq f4 2) (setq f3 1)))
+	   
+	   (loop for q4 from 0 to (/ population-size 3)
+		do (setq y (random-chooser colors))
+		do (setq z (random-chooser (remove y colors)))
+		  do (loop for q1 from 1 to (/ len 2)
+				collect y into nulist
+				do (setq w nulist)
+				finally (loop for q2 from 1 to f1
+							collect z into nulist2
+							finally (progn (setq w (append nulist nulist2))
+							(setq x (append (list w) x))))))
+		(loop for q5 from 0 to (/ population-size 3)
+			do (setq y (random-chooser colors))
+			do (setq z (random-chooser (remove y colors)))
+			do (setq k (random-chooser (remove z (remove y colors))))
+			do (loop for q1 from 1 to f4
+				collect y into nulist
+				do (if (= (length x) population-size)(return-from mystery-2-scsa x))
+				do (setq w nulist)
+				finally (loop for q2 from 1 to f2
+							collect z into nulist2
+							do (setq w (append nulist nulist2))
+							finally (loop for q8 from 0 to (- f3 1)
+									 collect k into nulist3
+									 finally (progn 
+									 (setq w (append w nulist3))
+									 (setq x (append (list w) x)))))))
+		(return-from mystery-2-scsa x)))   
 
 (defun initialize-population (size board colors SCSA)
   (case SCSA
@@ -246,6 +286,7 @@
        (progn (loop for i from 1 to size
 		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
 		 collect(list (three-color-alternating board *3-choices*) (/ 1 size)))))
+      (mystery-2 (mapcar (lambda (element) (list element (/ 1 size))) (mystery-2-scsa size colors board)))
       (mystery-3
        (progn (loop for i from 1 to size
 		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
