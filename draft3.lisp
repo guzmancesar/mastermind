@@ -263,7 +263,28 @@
 									 finally (progn 
 									 (setq w (append w nulist3))
 									 (setq x (append (list w) x)))))))
-		(return-from mystery-2-scsa x)))   
+		(return-from mystery-2-scsa x)))
+
+(defun mystery-5-scsa (population-size colors len)
+	(let ((x ())  (next 0) (randv 0) (choice ())) 
+			 (loop for q from 1 to population-size
+				do (setq choice ())
+				do (loop for q1 from 0 to len
+						 do (setq next (random-chooser colors))
+						; do (print "step: ") do (print q1)
+						 do (setq randv (random 1.0)) ;choose a random float from 0 - 1
+						; do (print randv)
+						 do (progn
+							(if (and (< randv .15) (< q1 (- len 3))) ;if less than .45 triple it 
+								 (progn (setq choice (append (list next) choice))(incf q1))) ;if .15 > randv .45 double it 
+							(if (and (< randv .45) (< q1 (- len 2)))
+								 (progn (setq choice (append (list next) choice)) 
+								 (setq choice (cons next choice)) (incf q1)  (incf q1)))
+							(if (< q1 len) (setq choice (append (list (random-chooser colors)) choice))))
+					;	do (print choice)
+					finally (setq x (cons choice x)))
+				;do (print x)
+				finally (return-from mystery-5-scsa x))))   
 
 (defun initialize-population (size board colors SCSA)
   (case SCSA
@@ -293,6 +314,7 @@
         (progn (loop for i from 1 to size
 		 do(setf *2-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
 		  collect(list (two-alternating-colors board *2-choices*) (/ 1 size)))))
+      (mystery-5 (mapcar (lambda (element) (list element (/ 1 size))) (mystery-5-scsa size colors board)))
       (prefer-fewer
        (loop for i from 1 to size
 	  collect (list (prefer-fewer board colors) (/ 1 size))))
