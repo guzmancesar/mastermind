@@ -1,4 +1,4 @@
-;; Main player using genetic algorithm
+;; Main player using genetic algorithm (with min remaining eligible choice policy)
 
 (defparameter *population-size* 150)
 (defparameter *mutation-rate* 0.05)
@@ -12,11 +12,15 @@
 
 (defparameter *weighting-constant* 150)
 
+(defvar *legal-colors* nil)
 (defvar *guesses* nil)
 (defvar *responses* nil)
 (defvar *player-guess* nil)
 (defvar *population* nil)
 (defvar *eligible-set* nil)
+(defvar *2-choices* nil)
+(defvar *3-choices* nil)
+
 
 (defun make-weighted-list (population)
     ;; population should be a list containing tuples (e f), where e is a given element
@@ -45,13 +49,13 @@
     (let* ((first-split (random (length parent-one)))
             (second-split (random (length parent-one))))
         (if (< first-split second-split)
-            (append (subseq parent-one 0 first-split) 
-                (subseq parent-two first-split second-split) 
+            (append (subseq parent-one 0 first-split)
+                (subseq parent-two first-split second-split)
                 (subseq parent-one second-split (length parent-one)))
-            (append (subseq parent-one 0 second-split) 
-                (subseq parent-two second-split first-split) 
+            (append (subseq parent-one 0 second-split)
+                (subseq parent-two second-split first-split)
                 (subseq parent-one first-split (length parent-one))))))
-            
+
 
 (defun crossover (parent-one parent-two)
     ;; produces one child from parents one and two using either
@@ -62,8 +66,8 @@
 
 (defun mutation-GA (child colors)
     (let ((m-index (1+ (random (1- (length child))))))
-        (append (subseq child 0  m-index) 
-            (list (nth (random (length colors)) colors)) 
+        (append (subseq child 0  m-index)
+            (list (nth (random (length colors)) colors))
             (subseq child (1+ m-index) (length child)))))
 
 (defun mutation (child rate colors)
@@ -85,7 +89,7 @@
     ;; inversion done with probability of rate
     (if (>= rate (random 1.0))
         (inversion-GA child (length child))
-        child))	
+        child))
 
 (defun permutate-GA (child)
     (progn (rotatef (nth (random (length child)) child) (nth (random (length child)) child))
@@ -130,7 +134,7 @@
      for entry in guess
      for peg in answer
      for exact = (equal entry peg)
-     when exact 
+     when exact
      do (incf exact-counter)
      and do (decf (aref guess-color-count (spot entry)))
      and do (decf (aref true-color-count (spot entry)))
@@ -141,25 +145,34 @@
                         sum true
                         else sum guessed)))))
 
-(defun first-guess (size); first version/ make more robust later
-  (case size
-    (2 '(A A))
-    (3 '(A A B))
-    (4 '(A A B C))
-    (5 '(A A B C D))
-    (6 '(A A B B C D))
-    (7 '(A A B B C C D))
-    (8 '(A A B B C C D E))
-    (9 '(A A B B C C D D E))
-    (10 '(A A B B C C D D E F))
-    (11 '(A A B B C C D D E E F))
-    (12 '(A A B B C C D D E E F G))))
+(defun first-guess (size colors)
+    (loop for i from 0 to (1- size)
+        collect (nth (mod (floor i 2) (length colors)) colors)))
 
-(defun not-eligible (candidate guesses responses colors)
+(defun first-and-last-scsa (candidate)
+	  (if (equal (nth 0 candidate) 
+	      (nth (- (length candidate) 1) candidate))
+	       (return-from first-and-last-scsa t)
+	       (return-from first-and-last-scsa nil)))
+
+(defun only-once-scsa (current)
+    ;; checks if the current element has duplicates or not
+    (loop for e in current
+        when (member e (rest (member e current)))
+        do (return-from only-once-scsa nil)
+        finally (return-from only-once-scsa T)))
+
+(defun scsa-match (current SCSA)
+    ;; will only use this for first-and-last and only-once scsa's
+    (cond ((eql SCSA 'two-color) (first-and-last-scsa current))
+        ((eql SCSA 'only-once) (only-once-scsa current))
+        (T T)))
+
+(defun not-eligible (candidate guesses responses colors SCSA)
   ;; Takes an element from new population and checks if it can be added to *eligible-set*
   ;; returns T if candidate is NOT eligible for admission to *eligible-set*
   ;; ELIGIBILITY-> treat all previous guesses as if they were secret codes
-  ;; get score for candidate aganist previous guess if the difference between their scores is zero 
+  ;; get score for candidate aganist previous guess if the difference between their scores is zero
   ;; then candidate is eligible
   (let ((score nil))
   (loop for guess in guesses for response in responses
@@ -167,13 +180,14 @@
        ;;(print score)
        ;;(print response)
      when (not (and (eq (first score) (first response)) (eq (nth 1 score) (nth 1 response))))
-     do(return 'T))))
+     do(return 'T)
+     finally (not (scsa-match candidate SCSA)))))
 
 (defun fitness-score (current guesses responses colors val-a val-b turn-i pos-P)
   (let ((fitnessX 0)
         (fitnessY 0)
         (score 0))
-	(loop for guess in guesses 
+	(loop for guess in guesses
         for response in responses
 	    do (setf score ( custom-process-guess guess current colors))
 	     ;;(print score)
@@ -193,9 +207,120 @@
         (loop for element in population
             collect (list (first element) (/ (second element) total)))))
 
-(defun initialize-population (size board colors)
-  (loop for i from 1 to size
-       collect (list (insert-colors board colors) (/ 1 size))))
+;; for creating population for SCSA Mystery-1
+(defun three-color-alternating( board colors)
+  (let ((first-color (first colors)))
+  (let ((second-color (second colors)))
+  (let ((third-color (third colors)))
+    (loop for i from 0 to (- board 1)
+       collect (cond ((eq (mod i 3) 0) first-color)
+	             ((eq (mod i 3) 1) second-color)
+	             ((eq (mod i 3) 2) third-color)))))))
+
+(defun two-alternating-colors (board colors)
+  (let ((first-color  (first colors)))
+    (let ((second-color (second colors)))
+      (loop for i from 0 to (- board 1)
+	 when (oddp i) collect first-color
+	   else collect second-color))))
+
+(defun mystery-2-scsa (population-size colors len)
+	   (let ((x ()) (y 0) (z 0)(k 0)(w ()) (f1 0) (f2 0) (f3 0)(f4 0))
+	   (loop for q from 0 to (/ population-size 3)
+	       collect (make-list len :initial-element (nth (mod z (length colors)) colors)) into newlist
+		   do (incf z)
+		   finally (setq x newlist)
+		)
+	   (if (= (mod len 2) 1)(setq f1 (+ (/ len 2) 1)) (setq f1(- len (/ len 2))))
+	   (if (= (mod len 2) 1)(setq f4 (ceiling (/ len 3))) (setq f4 (ceiling (/ len 3))))
+	   (if (= (mod len 2) 1)(setq f2 (+ (floor (/ len 3)) 1)) (setq f2 (ceiling (/ len 3))))
+	   (if (= (mod len 2) 1)(setq f3 (- len (+ f2 f4))) (setq f3 (- LEN (+ F2 F4))))
+	   (if (= len 4) (progn (setq f2 1) (setq f4 2) (setq f3 1)))
+	   
+	   (loop for q4 from 0 to (/ population-size 3)
+		do (setq y (random-chooser colors))
+		do (setq z (random-chooser (remove y colors)))
+		  do (loop for q1 from 1 to (/ len 2)
+				collect y into nulist
+				do (setq w nulist)
+				finally (loop for q2 from 1 to f1
+							collect z into nulist2
+							finally (progn (setq w (append nulist nulist2))
+							(setq x (append (list w) x))))))
+		(loop for q5 from 0 to (/ population-size 3)
+			do (setq y (random-chooser colors))
+			do (setq z (random-chooser (remove y colors)))
+			do (setq k (random-chooser (remove z (remove y colors))))
+			do (loop for q1 from 1 to f4
+				collect y into nulist
+				do (if (= (length x) population-size)(return-from mystery-2-scsa x))
+				do (setq w nulist)
+				finally (loop for q2 from 1 to f2
+							collect z into nulist2
+							do (setq w (append nulist nulist2))
+							finally (loop for q8 from 0 to (- f3 1)
+									 collect k into nulist3
+									 finally (progn 
+									 (setq w (append w nulist3))
+									 (setq x (append (list w) x)))))))
+		(return-from mystery-2-scsa x)))
+
+(defun mystery-5-scsa (population-size colors len)
+	(let ((x ())  (next 0) (randv 0) (choice ())) 
+			 (loop for q from 1 to population-size
+				do (setq choice ())
+				do (loop for q1 from 0 to len
+						 do (setq next (random-chooser colors))
+						; do (print "step: ") do (print q1)
+						 do (setq randv (random 1.0)) ;choose a random float from 0 - 1
+						; do (print randv)
+						 do (progn
+							(if (and (< randv .15) (< q1 (- len 3))) ;if less than .45 triple it 
+								 (progn (setq choice (append (list next) choice))(incf q1))) ;if .15 > randv .45 double it 
+							(if (and (< randv .45) (< q1 (- len 2)))
+								 (progn (setq choice (append (list next) choice)) 
+								 (setq choice (cons next choice)) (incf q1)  (incf q1)))
+							(if (< q1 len) (setq choice (append (list (random-chooser colors)) choice))))
+					;	do (print choice)
+					finally (setq x (cons choice x)))
+				;do (print x)
+				finally (return-from mystery-5-scsa x))))   
+
+(defun initialize-population (size board colors SCSA)
+  (case SCSA
+    (two-color
+      (progn
+	(loop for i from 1 to size
+	   do(setf *2-choices* (loop for i from 1 to 2 for chosen = (random-chooser colors) collect chosen))
+	   collect (list (insert-colors board *2-choices*) (/ 1 size)))))
+      (usually-fewer
+       (progn
+	(loop for i from 1 to size
+	   do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+	   collect (list (insert-colors board *3-choices*) (/ 1 size)))))
+      (mystery-1
+       (progn (loop for i from 1 to size
+		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		 collect(list (three-color-alternating board *3-choices*) (/ 1 size)))))
+      (mystery-2 (mapcar (lambda (element) (list element (/ 1 size))) (mystery-2-scsa size colors board)))
+      (mystery-3
+       (progn (loop for i from 1 to size
+		 do(setf *3-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		 collect(list (insert-colors board *3-choices*) (/ 1 size)))))
+      (two-color-alternating
+        (progn (loop for i from 1 to size
+		  collect(list (two-color-alternating board colors) (/ 1 size)))))
+      (mystery-4
+        (progn (loop for i from 1 to size
+		 do(setf *2-choices* (loop for i from 1 to 3 for chosen = (random-chooser colors) collect chosen))
+		  collect(list (two-alternating-colors board *2-choices*) (/ 1 size)))))
+      (mystery-5 (mapcar (lambda (element) (list element (/ 1 size))) (mystery-5-scsa size colors board)))
+      (prefer-fewer
+       (loop for i from 1 to size
+	  collect (list (prefer-fewer board colors) (/ 1 size))))
+      (T
+       (loop for i from 1 to size
+       collect (list (insert-colors board colors) (/ 1 size))))))
 
 (defun most-similar (eligible-set colors)
     ;; returns the candidate in the set of eligible guesses that is the most
@@ -207,19 +332,77 @@
 			        sum (apply '+ (custom-process-guess i j colors)))
 		    do (when (> l (second best))
                     (setf best (list i l))))
-        (first best)))   
-  
+        (first best)))
+
+;; SELECTION HELPER
+;; returns random selection of size n, or length of list if n > length
+(defun choose-n-random-selection (n list)
+  (if (> n (length list))
+        (loop for i from 1 to (length list)
+            for choices = (copy-list list) then (set-difference choices (list chosen))
+            for chosen = (random-chooser choices)
+            collect chosen)
+        (loop for i from 1 to n
+            for choices = (copy-list list) then (set-difference choices (list chosen))
+            for chosen = (random-chooser choices)
+            collect chosen)))
+
+;; SELECTION HELPER
+;; sees if givenguess is still eligble after candidate is the guess and code is the code
+;; ELIGIBILITY is determinded by pretending that candidate was the last guess, and code is the answer
+; uses not-eligible function with parameters (candidate guesses responses colors)
+; returns T if still eligible, NIL otherwise
+(defun guess-still-eligible (givenguess candidate code colors guesses responses SCSA)
+    (let ((response (custom-process-guess code candidate colors))) ; response to c with code c*
+    (let ((guessescopy (append guesses (list candidate)))) ; pretend that we made guess c
+    (let ((responsescopy (append responses (list response)))) ; pretend that guess c got response
+    (return-from guess-still-eligible (not (not-eligible givenguess guessescopy responsescopy colors SCSA)) )))))
+
+;; SELECTION FUNCTION DEFINITION
+;; chooses the most appropriate guess from the eligible guesses
+;; PROCEDURE
+; 1. take a random selection set S ⊆ Eligible
+;    utilizes choose-n-random (n list)
+; 2. for each guess c ⊆ S and each c* ⊆ S/{c} functioning as a secret code,
+;    check how many codes in S/{c,c*} remain eligible
+; 3. pick the guess with the minimum average number of remaining eligible codes
+(defun select-guess-from-eligible (eligible colors guesses responses SCSA)
+    (let ((random-selection (choose-n-random-selection 25 eligible))) ; random selection
+        (let ((minindex -1)) ; index of guess with current minimum
+            (let ((minimum 150)) ; current minimum tracker for average remaining eligble codes
+    (loop for candidate in random-selection for i from 0 ; pick every possible c
+        do (let ((eligibleremainingsum 0)) ; track how many eligible guesses remain on average
+            (let ((eligibleremainingaverage))
+                (let ((count 0))
+        (loop for functioningcode in random-selection unless (equal candidate functioningcode) ; pick every possible c* != c
+            do (let ((eligibleremaining 0)) ; track with this particular code as functioning answer
+            ; pick every currently eligible guess that is not c or c*
+            (loop for givenguess in random-selection unless (or (eql givenguess candidate) (eql givenguess functioningcode) )
+                when (guess-still-eligible givenguess candidate functioningcode colors guesses responses SCSA)
+                    do (incf eligibleremaining)) ; add 1 to counter if currently eligible guess is still eligible
+            (setf eligibleremainingsum (+ eligibleremainingsum eligibleremaining))) ; add total eligible guesses to sum
+            do (incf count))
+        ; calculate average after all functioning answers for given candidate have been processed
+        (setf eligibleremainingaverage (/ eligibleremainingsum count))
+        ; compare to minimum
+        (when (< eligibleremainingaverage minimum)
+            (progn (setf minindex i) (setf minimum eligibleremainingaverage))))))) ; set new minimum and index
+    (return-from select-guess-from-eligible (nth minindex eligible))))))
+
+
 (defun FakeBrain (board colors SCSA last-response)
-    (declare (ignore SCSA))
     (if (null last-response)
-        (progn; First round set up
+        (progn; First round set up -> initialize legal colors based on SCSA
             (setf *guesses* nil)
             (setf *responses* nil)
-	        (setf *player-guess* (first-guess board))
+            (if (eql SCSA 'ab-color)
+                (setf *legal-colors* '(A B))
+                (setf *legal-colors* colors))
+	        (setf *player-guess* (first-guess board *legal-colors*))
             *player-guess*)
         (progn; Other rounds
             ;; initialize population
-            (setf *population* (initialize-population *population-size* board colors))
+	  (setf *population* (initialize-population *population-size* board *legal-colors* SCSA))
             ;; initialize eligible set (make empty)
             (setf *eligible-set* nil)
 	        ;keep track of all previous guesses and responses
@@ -232,27 +415,27 @@
                 ;; make weighted list according to fitness out of parent population
                 for parent-pool = (make-weighted-list *population*)
 	            ;;create new population-> calls crossover, mutation, inversion and permutation
-                for new-pop = (make-new-generation parent-pool colors)
+                for new-pop = (make-new-generation parent-pool *legal-colors*)
 	            ;;calculate fitness of all elements of the new population
-                for new-pop-with-fitness = (mapcar 
-                                            (lambda (element) 
-                                                (list element 
-                                                (fitness-score element 
-                                                    *guesses* 
+                for new-pop-with-fitness = (mapcar
+                                            (lambda (element)
+                                                (list element
+                                                (fitness-score element
+                                                    *guesses*
                                                     *responses*
-                                                    colors 
-                                                    *a-weight* 
-                                                    *b-weight*  
+                                                    *legal-colors*
+                                                    *a-weight*
+                                                    *b-weight*
                                                     (1+ (third last-response)) ;; number of current guess
                                                     board)))
                                             new-pop)
-                ;; standardize fitness values
+	       ;; standardize fitness values
                 for new-pop-with-standardized-fitness = (standardize-fitness-scores new-pop-with-fitness)
 	            ;; add eligible combinations to *eligible-set*
                 ;; eligible combinations do NOT have fitness scores attached
                 for eligible-guesses = (loop for element-with-fitness in new-pop-with-standardized-fitness
                                             for element = (first element-with-fitness)
-                                            when (not (not-eligible element *guesses* *responses* colors))
+                                            when (not (not-eligible element *guesses* *responses* *legal-colors* SCSA))
                                             collect element)
                 ;; set population to the new population and append new eligible combinations
                 ;; to the previous set of eligible combinations
@@ -263,8 +446,8 @@
 	        ;; choose guess from *eligible-set*
             ;; make sure eligible-set is not empty!!
 	        (if (not *eligible-set*)
-                (setf *player-guess* (insert-colors board colors))
+                (setf *player-guess* (insert-colors board *legal-colors*))
                 ;; either do random pick (dumb) or most-similar
                 ;; (setf *player-guess* (random-pick *eligible-set*)))
-                (setf *player-guess* (most-similar *eligible-set* colors)))
+                (setf *player-guess* (select-guess-from-eligible *eligible-set* *legal-colors* *guesses* *responses* SCSA)))
             *player-guess*)))
