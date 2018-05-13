@@ -174,7 +174,7 @@
 	(12 '(A A B B C C D D E E F G))
 	(15 '(A A B B C C D D E E F F G G H)))))
 
-(defun first-and-last (candidate)
+(defun first-and-last-scsa (candidate)
 	  (if (equal (nth 0 candidate) 
 	      (nth (- (length candidate) 1) candidate))
 	       (return-from first-and-last t)
@@ -189,7 +189,7 @@
 
 (defun scsa-match (current SCSA)
     ;; will only use this for first-and-last and only-once scsa's
-    (cond ((eql SCSA 'two-color) (two-color-scsa current))
+    (cond ((eql SCSA 'two-color) (first-and-last-scsa current))
         ((eql SCSA 'only-once) (only-once-scsa current))
         (T T)))
 
