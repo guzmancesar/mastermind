@@ -177,8 +177,8 @@
 (defun first-and-last-scsa (candidate)
 	  (if (equal (nth 0 candidate) 
 	      (nth (- (length candidate) 1) candidate))
-	       (return-from first-and-last t)
-	       (return-from first-and-last nil)))
+	       (return-from first-and-last-scsa t)
+	       (return-from first-and-last-scsa nil)))
 
 (defun only-once-scsa (current)
     ;; checks if the current element has duplicates or not
