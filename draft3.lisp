@@ -145,34 +145,9 @@
                         sum true
                         else sum guessed)))))
 
-(defun first-guess (size SCSA); first version/ make more robust later
-  (if (eql SCSA 'ab-color)
-      (case size
-	(2 '(A A))
-	(3 '(A A B))
-	(4 '(A A B B))
-	(5 '(A A A B B))
-	(6 '(A A A B B B))
-	(7 '(A A A A B B B))
-	(8 '(A A A A B B B B))
-	(9 '(A A A A A B B B B))
-	(10 '(A A A A A B B B B B))
-	(11 '(A A A A A A B B B B B))
-	(12 '(A A A A A A B B B B B B))
-	(15 '(A A A A A A A A B B B B B B B)))
-      (case size
-	(2 '(A A))
-	(3 '(A A B))
-	(4 '(A A B C))
-	(5 '(A A B C D))
-	(6 '(A A B B C D))
-	(7 '(A A B B C C D))
-	(8 '(A A B B C C D E))
-	(9 '(A A B B C C D D E))
-	(10 '(A A B B C C D D E F))
-	(11 '(A A B B C C D D E E F))
-	(12 '(A A B B C C D D E E F G))
-	(15 '(A A B B C C D D E E F F G G H)))))
+(defun first-guess (size colors)
+    (loop for i from 0 to (1- size)
+        collect (nth (mod (floor i 2) (length colors)) colors)))
 
 (defun first-and-last-scsa (candidate)
 	  (if (equal (nth 0 candidate) 
@@ -401,7 +376,7 @@
             (if (eql SCSA 'ab-color)
                 (setf *legal-colors* '(A B))
                 (setf *legal-colors* colors))
-	        (setf *player-guess* (first-guess board SCSA))
+	        (setf *player-guess* (first-guess board *legal-colors*))
             *player-guess*)
         (progn; Other rounds
             ;; initialize population
@@ -453,5 +428,4 @@
                 ;; either do random pick (dumb) or most-similar
                 ;; (setf *player-guess* (random-pick *eligible-set*)))
                 (setf *player-guess* (select-guess-from-eligible *eligible-set* *legal-colors* *guesses* *responses* SCSA)))
-		(print *player-guess*)
             *player-guess*)))
